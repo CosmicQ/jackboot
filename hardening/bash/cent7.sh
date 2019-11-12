@@ -55,29 +55,56 @@ Edit the /etc/fstab file and add nodev to the fourth field (mounting options) fo
 Run the following command to remount /var/tmp :
 # mount -o remount,nodev /var/tmp
 
-# 3.1 Network Parameters
-NET_CONFIG["net.ipv4.ip_forward"]="0"                        # 3.1.1
-NET_CONFIG["net.ipv4.conf.all.send_redirects"]="0"           # 3.1.2
-NET_CONFIG["net.ipv4.conf.default.send_redirects"]="0"       # 3.1.2
-NET_CONFIG["net.ipv4.conf.all.accept_source_route"]="0"      # 3.2.1
-NET_CONFIG["net.ipv4.conf.default.accept_source_route"]="0"  # 3.2.1
-NET_CONFIG["net.ipv4.conf.all.accept_redirects"]="0"         # 3.2.2
-NET_CONFIG["net.ipv4.conf.default.accept_redirects"]="0"     # 3.2.2
-NET_CONFIG["net.ipv4.conf.all.secure_redirects"]="0"         # 3.2.3
-NET_CONFIG["net.ipv4.conf.default.secure_redirects"]="0"     # 3.2.3
-NET_CONFIG["net.ipv4.conf.all.log_martians"]="1"             # 3.2.4
-NET_CONFIG["net.ipv4.conf.default.log_martians"]="1"         # 3.2.4
-NET_CONFIG["net.ipv4.icmp_echo_ignore_broadcasts"]="1"       # 3.2.5
-NET_CONFIG["net.ipv4.icmp_ignore_bogus_error_responses"]="1" # 3.2.6
-NET_CONFIG["net.ipv4.conf.all.rp_filter"]="1"                # 3.2.7 
-NET_CONFIG["net.ipv4.conf.default.rp_filter"]="1"            # 3.2.7
-NET_CONFIG["net.ipv4.tcp_syncookies"]="1"                    # 3.2.8
-NET_CONFIG["net.ipv6.conf.all.accept_ra"]="0"                # 3.3.1
-NET_CONFIG["net.ipv6.conf.default.accept_ra"]="0"            # 3.3.1
-NET_CONFIG["net.ipv6.conf.all.accept_redirects"]="0"         # 3.3.2
-NET_CONFIG["net.ipv6.conf.default.accept_redirects"]="0"     # 3.3.2
+# 3.1 - 3.3 Network Parameters
+NET_CONFIG_ZED=(
+    "net.ipv4.ip_forward"
+    "net.ipv4.conf.all.send_redirects"
+    "net.ipv4.conf.default.send_redirects"
+    "net.ipv4.conf.all.accept_source_route"
+    "net.ipv4.conf.default.accept_source_route"
+    "net.ipv4.conf.all.accept_redirects"
+    "net.ipv4.conf.default.accept_redirects"
+    "net.ipv4.conf.all.secure_redirects"
+    "net.ipv4.conf.default.secure_redirects"
+    "net.ipv6.conf.all.accept_ra"
+    "net.ipv6.conf.default.accept_ra"
+    "net.ipv6.conf.all.accept_redirects"
+    "net.ipv6.conf.default.accept_redirects"
+    )
+NET_CONFIG_ONE=(
+    "net.ipv4.conf.all.log_martians"
+    "net.ipv4.conf.default.log_martians"
+    "net.ipv4.icmp_echo_ignore_broadcasts"
+    "net.ipv4.icmp_ignore_bogus_error_responses"
+    "net.ipv4.conf.all.rp_filter"
+    "net.ipv4.conf.default.rp_filter"
+    "net.ipv4.tcp_syncookies"
+)
 
-sysctl -w net.ipv6.route.flush=1
+function update_sysconfig() {
+  num=$1 && shift
+  arr=("$@")
+
+  for element in ${arr[@]}; do
+    if grep -q "^#${element}" /etc/sysctl.conf; then
+      sed -i "s/#${element}.*/${element}=${num}/g" /etc/sysctl.conf
+    fi
+    if grep -q "^#\ ${element}" /etc/sysctl.conf; then
+      sed -i "s/#\ ${element}.*/${element}=${num}/g" /etc/sysctl.conf
+    fi
+    if grep -q "^${element}" /etc/sysctl.conf; then
+      sed -i "s/${element}.*/${element}=${num}/g" /etc/sysctl.conf
+    fi
+    if ! grep -q "${element}" /etc/sysctl.conf; then
+      echo "${element}=${num}" >> /etc/sysctl.conf
+    fi
+  done
+}
+
+update_sysconfig 0 ${NET_CONFIG_ZED[@]}
+update_sysconfig 1 ${NET_CONFIG_ONE[@]}
+
+sysctl -w net.ipv6.route.flush
 
 # 3.3.3 - Ensure IPv6 is disabled
 echo "NETWORKING_IPV6=no" >> /etc/sysconfig/network
