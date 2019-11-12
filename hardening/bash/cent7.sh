@@ -104,7 +104,7 @@ function update_sysconfig() {
 update_sysconfig 0 ${NET_CONFIG_ZED[@]}
 update_sysconfig 1 ${NET_CONFIG_ONE[@]}
 
-sysctl -w net.ipv6.route.flush
+sysctl -w net.ipv6.route.flush=1
 
 # 3.3.3 - Ensure IPv6 is disabled
 echo "NETWORKING_IPV6=no" >> /etc/sysconfig/network
