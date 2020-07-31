@@ -2,9 +2,22 @@
 
 # Simple bash script to get hardening started (CIS Level 1)
 
+# REQUIREMENTS - Systemd
+
 # 1.1.1.1-8 - Disable Filesystems
-FILESYSTEMS=(cramfs freevxfs jffs2 hfs hfsplus squashfs udf vfat)
+FILESYSTEMS=(
+  cramfs
+  freevxfs
+  jffs2
+  hfs
+  hfsplus
+  squashfs
+  udf
+  vfat
+)
+
 touch /etc/modprobe.d/CIS.conf
+
 for FS in "${FILESYSTEMS[@]}"
 do
   if ! grep $FS /etc/modprobe.d/CIS.conf; then
@@ -13,9 +26,35 @@ do
   fi
 done
 
+# 1.7.1 - Logon Banners
+
+BANNERS=(
+  "/etc/motd"
+  "/etc/issue"
+  "/etc/issue.net"
+)
+
+BANNER_DEFAULT="Authorized uses only. All activity may be monitored and reported.\n"
+BANNER_MD5=`echo $BANNER_DEFAULT |md5`
+
+for file in "${BANNERS}"
+do
+  if [ `cat $file | md5` != $BANNER_MD5 ]; then
+    echo $BANNER_DEFAULT > $file
+    chmod 0644 $file
+  fi
+done
+
 # 3.5.1-4 - Uncommon Network Protocols
-NET_PROTOCOLS=(dccp sctp rds tipc)
+NET_PROTOCOLS=(
+  dccp
+  sctp
+  rds
+  tipc
+)
+
 touch /etc/modprobe.d/CIS.conf
+
 for NP in "${NET_PROTOCOLS[@]}"
 do
   if ! grep $NP /etc/modprobe.d/CIS.conf; then
@@ -156,3 +195,15 @@ done
 
 systemctl restart sshd.service
 
+# 6.1 System file permissions
+6_1_SYSTEM_FILES=(
+  "/etc/passwd"   root:root 644
+  "/etc/shadow"   root:root 000
+  "/etc/group"    root:root 644
+  "/etc/gshadow"  root:root 600
+  "/etc/passwd-"  root:root 600
+  "/etc/shadow-"  root:root 600
+  "/etc/group-"   root:root 600
+  "/etc/gshadow-" root:root 600
+  
+)
